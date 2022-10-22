@@ -1,4 +1,8 @@
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 age_classes_file='data/age_classes.txt'
 # print(age_classes_file, "======================")
@@ -90,14 +94,32 @@ tafeng_full['transaction_time'] = pd.to_datetime(tafeng_full['transaction_time']
 tafeng_full.to_csv('tafeng_full.csv')
 
 header = ['transaction_time','customer_id','num_items','total_value','num_unique']
-
 carts = pd.DataFrame()
-carts['num_items'] = tafeng_full.groupby(['transaction_time', 'customer_id'])['amount'].sum().to_frame(
+carts['num_items'] = tafeng_full.groupby(['transaction_time', 'customer_id'])['amount'].agg(
+    lambda x: x.astype(int).sum()).to_frame(
     name='num_items')['num_items']
-carts['total_value'] = tafeng_full.groupby(['transaction_time', 'customer_id'])['sales_price'].sum().to_frame(
+carts['total_value'] = tafeng_full.groupby(['transaction_time', 'customer_id'])['sales_price'].agg(
+    lambda x: x.astype(int).sum()).to_frame(
     name='sales_price')['sales_price']
 carts['num_unique']  = tafeng_full.groupby(['transaction_time', 'customer_id'])['product_id'].count().to_frame(
     name='num_unique')['num_unique']
-carts.to_csv('crts.csv')
-print(carts.head())
+carts = carts.reset_index()
+# carts.to_csv('crts.csv')
+# print(carts['num_items'].max())
 ...
+carts['log_num_items'] = np.log(carts['num_items'])
+carts['log_total_value'] = np.log(carts['total_value'])
+# carts.plot.scatter('log_num_items','log_total_value',c='black')
+
+
+# sns.lmplot(x='num_items', y='total_value', data=carts)
+# plt.show()
+
+customer_age = tafeng_full.groupby('age_range')['customer_id'].count()
+customer_age = customer_age.to_frame(name='count').reset_index()
+print(customer_age)
+customer_age.plot.bar(x='age_range', y='count')
+plt.xlabel('Age Range')
+plt.ylabel('Number of Customers')
+plt.title('Age Distribution of Shoppers')
+plt.show()
